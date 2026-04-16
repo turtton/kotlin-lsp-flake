@@ -79,8 +79,12 @@ stdenv.mkDerivation {
     mkdir -p $out/lib/kotlin-lsp $out/bin
     cp -r unpacked/* $out/lib/kotlin-lsp/
 
-    chmod +x $out/lib/kotlin-lsp/jre/bin/java
     chmod +x $out/lib/kotlin-lsp/kotlin-lsp.sh
+  '' + (if stdenv.hostPlatform.isDarwin then ''
+    chmod +x $out/lib/kotlin-lsp/jre/Contents/Home/bin/java
+  '' else ''
+    chmod +x $out/lib/kotlin-lsp/jre/bin/java
+  '') + ''
 
     ln -s $out/lib/kotlin-lsp/kotlin-lsp.sh $out/bin/kotlin-lsp
 
