@@ -1,0 +1,44 @@
+name: Auto Update
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Daily at midnight UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Check for updates
+        id: check
+        run: |
+          chmod +x ./update.sh
+          ./update.sh
+          if git diff --quiet; then
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          else
+            VERSION=$(grep 'version = ' package.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request
+        if: steps.check.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "update: kotlin-lsp to ${{ steps.check.outputs.version }}"
+          title: "update: kotlin-lsp to ${{ steps.check.outputs.version }}"
+          body: |
+            Automated update of kotlin-lsp to version `${{ steps.check.outputs.version }}`.
+
+            This PR was created automatically by the update workflow.
+          branch: auto-update/kotlin-lsp-${{ steps.check.outputs.version }}
+          delete-branch: true
