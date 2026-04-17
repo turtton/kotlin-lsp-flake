@@ -7,7 +7,7 @@ PACKAGE_NIX="package.nix"
 current_version=$(grep 'version = ' "$PACKAGE_NIX" | head -1 | sed 's/.*"\(.*\)".*/\1/')
 
 latest_tag=$(curl -sf "https://api.github.com/repos/${REPO}/releases" \
-  | jq -r '[.[] | select(.tag_name | startswith("kotlin-lsp/v"))][0].tag_name')
+  | jq -r '[.[] | select(.tag_name | startswith("kotlin-lsp/v")) | select(.prerelease == false) | select(.draft == false)][0].tag_name')
 
 if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then
   echo "Failed to fetch latest release tag"

@@ -100,7 +100,7 @@ stdenv.mkDerivation {
     description = "Kotlin Language Server by JetBrains";
     homepage = "https://github.com/Kotlin/kotlin-lsp";
     license = licenses.asl20;
-    sourceProvenance = with sourceTypes; [ binaryBytecode ];
+    sourceProvenance = with sourceTypes; [ binaryBytecode binaryNativeCode ];
     platforms = builtins.attrNames platforms;
     mainProgram = "kotlin-lsp";
   };
