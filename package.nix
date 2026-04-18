@@ -77,13 +77,13 @@ stdenv.mkDerivation {
     runHook preInstall
 
     mkdir -p $out/lib/kotlin-lsp $out/bin
-    cp -r unpacked/* $out/lib/kotlin-lsp/
+    cp -r unpacked/. $out/lib/kotlin-lsp/
 
     chmod +x $out/lib/kotlin-lsp/kotlin-lsp.sh
   '' + (if stdenv.hostPlatform.isDarwin then ''
-    chmod +x $out/lib/kotlin-lsp/jre/Contents/Home/bin/java
+    find $out/lib/kotlin-lsp/jre/Contents/Home/bin -type f -exec chmod +x {} +
   '' else ''
-    chmod +x $out/lib/kotlin-lsp/jre/bin/java
+    find $out/lib/kotlin-lsp/jre/bin -type f -exec chmod +x {} +
   '') + ''
 
     ln -s $out/lib/kotlin-lsp/kotlin-lsp.sh $out/bin/kotlin-lsp

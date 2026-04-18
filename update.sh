@@ -6,8 +6,8 @@ PACKAGE_NIX="package.nix"
 
 current_version=$(grep 'version = ' "$PACKAGE_NIX" | head -1 | sed 's/.*"\(.*\)".*/\1/')
 
-latest_tag=$(curl -sf "https://api.github.com/repos/${REPO}/releases" \
-  | jq -r '[.[] | select(.tag_name | startswith("kotlin-lsp/v")) | select(.prerelease == false) | select(.draft == false)][0].tag_name')
+latest_tag=$(curl -sf "https://api.github.com/repos/${REPO}/releases/latest" \
+  | jq -r '.tag_name')
 
 if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then
   echo "Failed to fetch latest release tag"
@@ -33,6 +33,13 @@ declare -A PLATFORM_SUFFIXES=(
   ["aarch64-darwin"]="mac-aarch64"
 )
 
+# Use a temp file for portable sed (macOS + Linux)
+update_file() {
+  local file="$1" pattern="$2" replacement="$3"
+  local tmp="${file}.tmp"
+  sed "s|${pattern}|${replacement}|" "$file" > "$tmp" && mv "$tmp" "$file"
+}
+
 for system in "${!PLATFORM_SUFFIXES[@]}"; do
   suffix="${PLATFORM_SUFFIXES[$system]}"
   url="https://download-cdn.jetbrains.com/kotlin-lsp/${latest_version}/kotlin-lsp-${latest_version}-${suffix}.zip"
@@ -46,10 +53,10 @@ for system in "${!PLATFORM_SUFFIXES[@]}"; do
   fi
 
   old_hex=$(grep -A2 "\"${system}\"" "$PACKAGE_NIX" | grep 'hash = ' | sed 's/.*sha256:\([a-f0-9]*\).*/\1/')
-  sed -i "s|${old_hex}|${new_hex}|" "$PACKAGE_NIX"
+  update_file "$PACKAGE_NIX" "$old_hex" "$new_hex"
   echo "  $system: $new_hex"
 done
 
-sed -i "s|version = \"${current_version}\"|version = \"${latest_version}\"|" "$PACKAGE_NIX"
+update_file "$PACKAGE_NIX" "version = \"${current_version}\"" "version = \"${latest_version}\""
 
 echo "Updated package.nix to version $latest_version"

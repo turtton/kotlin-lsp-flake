@@ -28,13 +28,21 @@ nix run github:turtton/kotlin-lsp-flake
     kotlin-lsp.url = "github:turtton/kotlin-lsp-flake";
   };
 
-  outputs = { nixpkgs, kotlin-lsp, ... }: {
-    # パッケージを直接使用
-    # kotlin-lsp.packages.${system}.default
+  outputs = { nixpkgs, kotlin-lsp, ... }:
+    let
+      system = "x86_64-linux"; # お使いのシステムに変更してください
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ kotlin-lsp.overlays.default ];
+      };
+    in
+    {
+      # パッケージを直接使用
+      # kotlin-lsp.packages.${system}.default
 
-    # または overlay を使用
-    nixpkgs.overlays = [ kotlin-lsp.overlays.default ];
-  };
+      # または overlay 経由で使用
+      # pkgs.kotlin-lsp
+    };
 }
 ```
 
