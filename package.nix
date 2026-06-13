@@ -13,6 +13,7 @@
   libxtst,
   wayland,
   zlib,
+  extraBinNames ? [ ],
 }:
 
 let
@@ -87,6 +88,10 @@ stdenv.mkDerivation {
   '') + ''
 
     ln -s $out/lib/kotlin-lsp/kotlin-lsp.sh $out/bin/kotlin-lsp
+
+    ${lib.concatMapStringsSep "\n" (name: ''
+      ln -s $out/lib/kotlin-lsp/kotlin-lsp.sh "$out/bin"/${lib.escapeShellArg name}
+    '') extraBinNames}
 
     runHook postInstall
   '';

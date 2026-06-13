@@ -50,6 +50,39 @@ nix run github:turtton/kotlin-lsp-flake
 
 Once the overlay is applied, `kotlin-lsp` is available as `pkgs.kotlin-lsp`.
 
+## Available Packages
+
+The flake provides the following packages:
+
+| Package | Binary names | Description |
+|---|---|---|
+| `kotlin-lsp` | `kotlin-lsp` | Default package with standard binary name |
+| `kotlin-ls` | `kotlin-lsp`, `kotlin-ls` | Includes `kotlin-ls` alias for LSP clients that expect this name |
+
+### Using the `kotlin-ls` package
+
+To make `kotlin-ls` available on PATH (e.g., for LSP clients that expect this binary name):
+
+```sh
+nix shell github:turtton/kotlin-lsp-flake#kotlin-ls -c kotlin-ls
+```
+
+### Custom binary aliases
+
+The `kotlin-lsp` package accepts an `extraBinNames` parameter for custom aliases:
+
+```nix
+# Via overlay
+pkgs.kotlin-lsp.override { extraBinNames = [ "kotlin-ls" "kotlin-languageserver" ]; }
+
+# Or via flake package override
+inputs.kotlin-lsp.packages.${system}.kotlin-lsp.override {
+  extraBinNames = [ "kotlin-ls" ];
+}
+```
+
+Note: `nix run` uses the package's `meta.mainProgram` (`kotlin-lsp`) to determine which binary to execute. The `kotlin-ls` symlink is added to `$out/bin/` and is available on PATH when the package is installed.
+
 ## Auto-Update
 
 A GitHub Actions workflow checks for new releases daily and creates a PR when an update is available.

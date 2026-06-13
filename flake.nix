@@ -23,6 +23,7 @@
         in
         {
           kotlin-lsp = pkgs.callPackage ./package.nix { };
+          kotlin-ls = self.packages.${system}.kotlin-lsp.override { extraBinNames = [ "kotlin-ls" ]; };
           default = self.packages.${system}.kotlin-lsp;
         }
       );
