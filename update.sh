@@ -2,6 +2,14 @@
 set -euo pipefail
 
 REPO="Kotlin/kotlin-lsp"
+
+FORCE=false
+for arg in "$@"; do
+  if [ "$arg" = "--force" ]; then
+    FORCE=true
+  fi
+done
+
 HASHES_JSON="hashes.json"
 
 current_version=$(jq -r '.version' "$HASHES_JSON")
@@ -19,12 +27,16 @@ latest_version="${latest_tag#kotlin-lsp/v}"
 echo "Current: $current_version"
 echo "Latest:  $latest_version"
 
-if [ "$current_version" = "$latest_version" ]; then
-  echo "Already up to date"
+if [ "$current_version" = "$latest_version" ] && [ "$FORCE" = false ]; then
+  echo "Version $current_version is already current. Use --force to refresh hashes."
   exit 0
 fi
 
-echo "Updating to $latest_version..."
+if [ "$FORCE" = true ]; then
+  echo "Force-refreshing hashes for version $latest_version..."
+else
+  echo "Updating from $current_version to $latest_version..."
+fi
 
 declare -A PLATFORM_SUFFIXES=(
   ["x86_64-linux"]="linux-x64"
