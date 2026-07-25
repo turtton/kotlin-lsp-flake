@@ -17,28 +17,9 @@
 }:
 
 let
-  version = "262.2310.0";
-
-  platforms = {
-    "x86_64-linux" = {
-      suffix = "linux-x64";
-      hash = "sha256:c004242158f4b5e1d917ddd848e6f6a279484fa58a3e2bce8846b807d1ad16b1";
-    };
-    "aarch64-linux" = {
-      suffix = "linux-aarch64";
-      hash = "sha256:1f8c814dfa9d64a9fba32b83a6fa0279cbc48e7240ef0ce922c7db2f39f0d35c";
-    };
-    "x86_64-darwin" = {
-      suffix = "mac-x64";
-      hash = "sha256:a4ccf591664cfef6a12f21a690d23bad26b92de62ed34674491b915f25f95bf5";
-    };
-    "aarch64-darwin" = {
-      suffix = "mac-aarch64";
-      hash = "sha256:11560eb4ecd766204363848cc5ee84b51c0fd03fbfd4bbedaba0f00af74309c7";
-    };
-  };
-
-  platform = platforms.${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}");
+  versionData = lib.importJSON ./hashes.json;
+  version = versionData.version;
+  platform = versionData.sources.${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}");
 in
 stdenv.mkDerivation {
   pname = "kotlin-lsp";
@@ -106,7 +87,7 @@ stdenv.mkDerivation {
     homepage = "https://github.com/Kotlin/kotlin-lsp";
     license = licenses.asl20;
     sourceProvenance = with sourceTypes; [ binaryBytecode binaryNativeCode ];
-    platforms = builtins.attrNames platforms;
+    platforms = builtins.attrNames versionData.sources;
     mainProgram = "kotlin-lsp";
   };
 }

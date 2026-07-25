@@ -28,6 +28,10 @@
         }
       );
 
+      checks = forAllSystems (system: {
+        default = self.packages.${system}.default;
+      });
+
       overlays.default = final: prev: {
         kotlin-lsp = final.callPackage ./package.nix { };
       };
