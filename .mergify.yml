@@ -1,6 +1,9 @@
 queue_rules:
   - name: default
-    conditions: []
+    conditions:
+      - check-success="CI / build (ubuntu-latest)"
+      - check-success="CI / build (macos-latest)"
+      - check-success="CI / build (macos-15-intel)"
 
 pull_request_rules:
   - name: auto-merge auto-update PRs
