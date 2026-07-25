@@ -1,7 +1,7 @@
 queue_rules:
   - name: default
     merge_method: squash
-    conditions:
+    merge_conditions:
       - check-success="CI / build (ubuntu-latest)"
       - check-success="CI / build (macos-latest)"
       - check-success="CI / build (macos-15-intel)"
