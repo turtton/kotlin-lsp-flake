@@ -1,9 +1,11 @@
 queue_rules:
   - name: default
-    conditions:
-      - check-success="CI / build (ubuntu-latest)"
-      - check-success="CI / build (macos-latest)"
-      - check-success="CI / build (macos-15-intel)"
+    merge_method: squash
+    merge_protection_settings:
+      auto_merge_conditions:
+          - check-success="CI / build (ubuntu-latest)"
+          - check-success="CI / build (macos-latest)"
+          - check-success="CI / build (macos-15-intel)"
 
 pull_request_rules:
   - name: auto-merge auto-update PRs
@@ -13,4 +15,3 @@ pull_request_rules:
     actions:
       queue:
         name: default
-        method: squash
