@@ -2,9 +2,9 @@
 set -euo pipefail
 
 REPO="Kotlin/kotlin-lsp"
-PACKAGE_NIX="package.nix"
+HASHES_JSON="hashes.json"
 
-current_version=$(awk -F'"' '/version = / { print $2; exit }' "$PACKAGE_NIX")
+current_version=$(jq -r '.version' "$HASHES_JSON")
 
 latest_tag=$(curl -sf "https://api.github.com/repos/${REPO}/releases/latest" \
   | jq -r '.tag_name')
@@ -32,13 +32,6 @@ declare -A PLATFORM_SUFFIXES=(
   ["x86_64-darwin"]="mac-x64"
   ["aarch64-darwin"]="mac-aarch64"
 )
-
-# Use a temp file for portable sed (macOS + Linux)
-update_file() {
-  local file="$1" pattern="$2" replacement="$3"
-  local tmp="${file}.tmp"
-  sed "s|${pattern}|${replacement}|" "$file" > "$tmp" && mv "$tmp" "$file"
-}
 
 # Pre-flight: verify all platform binaries are available before modifying any files
 TMP_SHA=""
@@ -90,12 +83,26 @@ for system in "${!PLATFORM_SUFFIXES[@]}"; do
 done
 trap - EXIT
 
-# All binaries confirmed available — apply changes
-for system in "${!PLATFORM_SUFFIXES[@]}"; do
-  old_hex=$(grep -A2 "\"${system}\"" "$PACKAGE_NIX" | grep 'hash = ' | sed 's/.*sha256:\([a-f0-9]*\).*/\1/')
-  update_file "$PACKAGE_NIX" "$old_hex" "${NEW_HASHES[$system]}"
-done
+# All binaries confirmed available — write hashes.json atomically
+HASHES_TMP=$(mktemp)
+jq -n \
+  --arg version "$latest_version" \
+  --arg x86_64_linux_suffix "${PLATFORM_SUFFIXES[x86_64-linux]}" \
+  --arg x86_64_linux_hash "sha256:${NEW_HASHES[x86_64-linux]}" \
+  --arg aarch64_linux_suffix "${PLATFORM_SUFFIXES[aarch64-linux]}" \
+  --arg aarch64_linux_hash "sha256:${NEW_HASHES[aarch64-linux]}" \
+  --arg x86_64_darwin_suffix "${PLATFORM_SUFFIXES[x86_64-darwin]}" \
+  --arg x86_64_darwin_hash "sha256:${NEW_HASHES[x86_64-darwin]}" \
+  --arg aarch64_darwin_suffix "${PLATFORM_SUFFIXES[aarch64-darwin]}" \
+  --arg aarch64_darwin_hash "sha256:${NEW_HASHES[aarch64-darwin]}" \
+  '{
+    version: $version,
+    sources: {
+      "x86_64-linux":   { suffix: $x86_64_linux_suffix,   hash: $x86_64_linux_hash },
+      "aarch64-linux":  { suffix: $aarch64_linux_suffix,  hash: $aarch64_linux_hash },
+      "x86_64-darwin":  { suffix: $x86_64_darwin_suffix,  hash: $x86_64_darwin_hash },
+      "aarch64-darwin": { suffix: $aarch64_darwin_suffix,  hash: $aarch64_darwin_hash }
+    }
+  }' > "$HASHES_TMP" && mv "$HASHES_TMP" "$HASHES_JSON"
 
-update_file "$PACKAGE_NIX" "version = \"${current_version}\"" "version = \"${latest_version}\""
-
-echo "Updated package.nix to version $latest_version"
+echo "Updated $HASHES_JSON to version $latest_version"

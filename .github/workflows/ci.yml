@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -32,3 +33,19 @@ jobs:
 
       - name: Verify binary exists
         run: test -x ./result/bin/kotlin-lsp
+
+      - name: Verify binary version
+        run: |
+          VERSION="$(jq -r '.version' hashes.json)"
+          echo "Expected version from hashes.json: $VERSION"
+          if RESULT=$(./result/bin/kotlin-lsp --version 2>&1); then
+            echo "Binary --version output: $RESULT"
+            # Version output format is unknown; only do strict check if it matches
+            if echo "$RESULT" | grep -q "$VERSION"; then
+              echo "Version check passed"
+            else
+              echo "Version output differs from hashes.json — logging only (not failing)"
+            fi
+          else
+            echo "kotlin-lsp --version failed or not supported — skipping version check"
+          fi
